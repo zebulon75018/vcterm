@@ -1,6 +1,11 @@
 # vcterm
 Terminal with docking as Visual Code and integrating with helpfull features...
 
+# Prerequisity
+
+1. Qt 
+2. qtwebengine
+
 
 [![First Demo ](https://img.youtube.com/vi/JBAkvO5jjtQ/0.jpg)](https://youtu.be/JBAkvO5jjtQ)
 
