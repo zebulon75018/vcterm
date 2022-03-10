@@ -3,7 +3,7 @@ Terminal with docking as Visual Code and integrating with helpfull features...
 
 # Prerequisity
 
-1. Qt 
+1. Qt 5
 2. qtwebengine
 
 
