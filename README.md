@@ -18,6 +18,17 @@ make.
 
 after lauch dterm. 
 
+
+# Feature
+1. Embedded terminals inside one docking applicaton
+2. Can show help man page. ( qterm man ls ) 
+3. Can send the same command to all opened terminals
+4. Can open termian and send a command from a list a command
+5. Can change font ( size / family ) 
+6. Can  change the background by theme.
+
+
+
 [![From githubuser0xFFFF](https://github.com/githubuser0xFFFF/Qt-Advanced-Docking-System/blob/master/doc/cfg_flag_FloatingContainerForceNativeTitleBar_true.png)
 
 [![First Demo ](https://img.youtube.com/vi/JBAkvO5jjtQ/0.jpg)](https://youtu.be/JBAkvO5jjtQ)
