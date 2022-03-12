@@ -13,12 +13,12 @@ You must clone 3 repository:
 2. Qt-Advanced-Docking-System     https://github.com/githubuser0xFFFF/Qt-Advanced-Docking-System
 3. qtterminalwidget  : https://github.com/jacob3141/qtterminalwidget
 
-qmake 
-make.
+to make the projet: 
+source compil.sh
 
-after lauch dterm. 
+after lauch cvterm. 
 
-dterm man ls : show the man of ls in a webpage.
+cvterm man ls : show the man of ls in a webpage.
 
 # Feature
 1. Embedded terminals inside one docking applicaton
