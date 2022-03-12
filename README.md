@@ -18,6 +18,7 @@ make.
 
 after lauch dterm. 
 
+dterm man ls : show the man of ls in a webpage.
 
 # Feature
 1. Embedded terminals inside one docking applicaton
