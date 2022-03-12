@@ -5,9 +5,9 @@ MOC_DIR     = .moc
 
 QT += core gui widgets webkitwidgets network
 
-include(QSingleInstance/singleapplication.pri)
+include(QSingleInstance/de_skycoder42_qsingleinstance.pri)
 
-TARGET = dterm
+TARGET = cvterm
 #DESTDIR = $${ADS_OUT_ROOT}/lib
 TEMPLATE = app
 CONFIG += c++14

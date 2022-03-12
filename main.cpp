@@ -1,5 +1,5 @@
 #include "MainWindow.h"
-#include "QSingleInstance/qsingleinstance.h"
+#include "QSingleInstance/QSingleInstance/qsingleinstance.h"
 
 #include <QDir>
 #include <QApplication>
