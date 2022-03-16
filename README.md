@@ -7,7 +7,7 @@ Terminal with docking as Visual Code and integrating with helpfull features...
 2. qtwebengine
 
 
-You must clone 3 repository:
+You must clone 3 repository, this will be done by compil.sh:
 
 1. QSingleInstance  https://github.com/Skycoder42/QSingleInstance 
 2. Qt-Advanced-Docking-System     https://github.com/githubuser0xFFFF/Qt-Advanced-Docking-System
