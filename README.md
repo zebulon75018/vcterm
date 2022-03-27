@@ -28,7 +28,7 @@ cvterm man ls : show the man of ls in a webpage.
 4. Can open termian and send a command from a list a command
 5. Can change font ( size / family ) 
 6. Can  change the background by theme.
-7. Drag and drop path or file.
+7. Drag and drop path or file.   (https://github.com/zebulon75018/vcterm/blob/main/Peek%202022-03-28%2000-46.gif)
 8. Choose files/directory by file/dir dialog
 9. Find text in terminal 
 
