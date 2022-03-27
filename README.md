@@ -41,7 +41,7 @@ cvterm man ls : show the man of ls in a webpage.
 
 [![Launch multiprocess ! on all terminal, or launch process in multiterminal ](https://img.youtube.com/vi/pg7EwaA3SE0/0.jpg)](https://youtu.be/pg7EwaA3SE0)
 
-[![New Demo ](https://img.youtu.com/YRqGp4bD3Sw/0.jpg)](https://youtu.be/YRqGp4bD3Sw)
+[![New Demo ](https://img.youtube.com/YRqGp4bD3Sw/0.jpg)](https://youtu.be/YRqGp4bD3Sw)
 
 
 
