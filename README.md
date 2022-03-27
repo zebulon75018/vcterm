@@ -12,6 +12,7 @@ You must clone 3 repository, this will be done by compil.sh:
 1. QSingleInstance  https://github.com/Skycoder42/QSingleInstance 
 2. Qt-Advanced-Docking-System     https://github.com/githubuser0xFFFF/Qt-Advanced-Docking-System
 3. qtterminalwidget  : https://github.com/jacob3141/qtterminalwidget
+4. font awesome : https://github.com/gamecreature/QtAwesome
 
 to make the projet: 
 source compil.sh
