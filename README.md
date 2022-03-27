@@ -27,7 +27,9 @@ cvterm man ls : show the man of ls in a webpage.
 4. Can open termian and send a command from a list a command
 5. Can change font ( size / family ) 
 6. Can  change the background by theme.
-
+7. Drag and drop path or file.
+8. Choose files/directory by file/dir dialog
+9. Find text in terminal 
 
 
 ![From githubuser0xFFFF](https://github.com/githubuser0xFFFF/Qt-Advanced-Docking-System/blob/master/doc/cfg_flag_FloatingContainerForceNativeTitleBar_true.png)
@@ -38,6 +40,8 @@ cvterm man ls : show the man of ls in a webpage.
 
 
 [![Launch multiprocess ! on all terminal, or launch process in multiterminal ](https://img.youtube.com/vi/pg7EwaA3SE0/0.jpg)](https://youtu.be/pg7EwaA3SE0)
+
+[![New Demo ](https://img.youtu.com/YRqGp4bD3Sw/0.jpg)](https://youtu.be/YRqGp4bD3Sw)
 
 
 
