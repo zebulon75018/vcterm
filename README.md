@@ -32,7 +32,7 @@ cvterm man ls : show the man of ls in a webpage.
 8. Choose files/directory by file/dir dialog  
 9. Find text in terminal 
 
-![](https://github.com/zebulon75018/vcterm/blob/main/screenshots/Peek 2022-03-28 23-50.gif)
+![](https://github.com/zebulon75018/vcterm/blob/main/screenshots/Peek%2022-03-28%23-50.gif)
 
 ![From githubuser0xFFFF](https://github.com/githubuser0xFFFF/Qt-Advanced-Docking-System/blob/master/doc/cfg_flag_FloatingContainerForceNativeTitleBar_true.png)
 
