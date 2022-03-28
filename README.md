@@ -28,10 +28,11 @@ cvterm man ls : show the man of ls in a webpage.
 4. Can open termian and send a command from a list a command
 5. Can change font ( size / family ) 
 6. Can  change the background by theme.
-7. Drag and drop path or file.   ![](https://github.com/zebulon75018/vcterm/blob/main/Peek%202022-03-28%2000-46.gif)
-8. Choose files/directory by file/dir dialog
+7. Drag and drop path or file.   ![](https://github.com/zebulon75018/vcterm/blob/main/screenshots/Peek%202022-03-28%2000-46.gif)
+8. Choose files/directory by file/dir dialog  
 9. Find text in terminal 
 
+![](https://github.com/zebulon75018/vcterm/blob/main/screenshots/find.gif)
 
 ![From githubuser0xFFFF](https://github.com/githubuser0xFFFF/Qt-Advanced-Docking-System/blob/master/doc/cfg_flag_FloatingContainerForceNativeTitleBar_true.png)
 
