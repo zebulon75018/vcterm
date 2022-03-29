@@ -23,8 +23,8 @@ cvterm man ls : show the man of ls in a webpage.
 
 # Feature
 1. Embedded terminals inside one docking applicaton
-2. Can show help man page. ( qterm man ls ) 
-3. Can send the same command to all opened terminals
+2. Can show help man page. ( qterm man ls )    ![](https://github.com/zebulon75018/vcterm/blob/main/screenshots/man2.gif)
+3. Can send the same command to all opened terminals ![](https://github.com/zebulon75018/vcterm/blob/main/screenshots/sendall.gif)
 4. Can open termian and send a command from a list a command
 5. Can change font ( size / family ) 
 6. Can  change the background by theme.
