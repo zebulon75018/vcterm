@@ -1,4 +1,5 @@
 #include "MainWindow.h"
+#include "parametermanager.h"
 #include "QSingleInstance/qsingleinstance.h"
 
 #include <QDir>
@@ -8,7 +9,19 @@ int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
 
-   QSingleInstance instance;
+    QStringList cmd;
+    for( int n = 0; n< argc; n++)
+    {
+      cmd << QString(argv[n]);
+    }
+    auto p = parameterManager(cmd);
+    if ( p.isHelpRequest() ) 
+    {
+        p.showHelp();
+        exit(0);
+    }
+
+    QSingleInstance instance;
 
     instance.setAutoRecovery(true);
 

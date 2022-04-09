@@ -36,7 +36,7 @@ public slots:
 
 private:
    void createMenu();
-   QAction *createAction(fa::icon ico );
+   QAction *createAction(fa::icon ico, QString tooltip="",int rotation = 0 );
    QString readFile(QString filename);
    ads::CDockWidget* createNewTerminal();
    ads::CDockWidget* createFileSystemTreeDockWidget();

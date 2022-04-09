@@ -26,6 +26,7 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent)
 {
 
+
     this->awesome = new QtAwesome();
     awesome->initFontAwesome();
     this->activeTerm = NULL;
@@ -122,7 +123,19 @@ void MainWindow::createMenu()
 
 
     auto saveLayoutAction = fileMenu->addAction(QStringLiteral("Save Layout"));
-    connect(saveLayoutAction, &QAction::triggered, this, [] {
+    connect(saveLayoutAction, &QAction::triggered, this, [this] {
+           QMap<QString, ads::CDockWidget*> dMap =   this->m_DockManager->dockWidgetsMap();
+           foreach ( const auto& outerKey, dMap.keys() )
+              {
+                qDebug() << " Name " << outerKey;
+                qDebug() << " DockWidget " << dMap[outerKey];
+             }
+             QList<ads::CDockContainerWidget*> dc = this->m_DockManager->dockContainers();
+             foreach( ads::CDockContainerWidget* c , dc )
+             {
+                qDebug() << " Dc " << c;
+             }
+
         }
     );
 
@@ -279,10 +292,18 @@ ads::CDockWidget* MainWindow::createFileSystemTreeDockWidget()
         //ViewMenu->addAction(DockWidget->toggleViewAction());
         QAction * tva = DockWidget->toggleViewAction();
         m_toggleMenu->addAction(tva);
-        auto hideAction = createAction(fa::eyeslash);
+        auto hideAction = createAction(fa::eyeslash,"Hide");
+        auto colorAction = createAction(fa::blacktie,"Change Dark/White");
+        colorAction->setCheckable(true);
         ToolBar->addAction(hideAction );
+        ToolBar->addAction(colorAction );
         connect(hideAction, &QAction::triggered, this,[tva] { tva->triggered();  });
-        //tva->setChecked(false);
+        connect(colorAction, &QAction::triggered, this,[m_treeview,this] {
+                                     QAction *s =  qobject_cast<QAction*>(sender());
+                                     if (s->isChecked())  m_treeview->setStyleSheet("background: #050505;color: white");  
+                                     else m_treeview->setStyleSheet("background: white;color: black");  
+                                 });
+        // Hide file tree widget
         m_treeview->expandAll();
         return DockWidget;
 }
@@ -313,27 +334,32 @@ ads::CDockWidget* MainWindow::createNewTerminal()
     m_toggleMenu->addAction(tva);
 
     QVariantMap options;
-    auto zoomInAction = createAction(fa::plus);
-    auto zoomOutAction = createAction(fa::minus);
-    auto fontAction = createAction(fa::font);
-    auto searchAction = createAction(fa::search);
-    auto clearAction = createAction(fa::bath);
-    auto newTermAction = createAction(fa::columns);
-    auto newTermTabAction = createAction(fa::clone);
-    auto insertFolderAction = createAction(fa::folder);
-    auto insertFileAction = createAction(fa::file);
-    auto hideAction = createAction(fa::eyeslash);
-    auto colorStyleAction = createAction(fa::blacktie);
+    auto zoomInAction = createAction(fa::plus,"Font size increase");
+    auto zoomOutAction = createAction(fa::minus,"Font size Decrease");
+    auto fontAction = createAction(fa::font,"Choose Font");
+    auto searchAction = createAction(fa::search,"Search in console");
+    auto clearAction = createAction(fa::bath,"Clear");
+    auto newTermAction = createAction(fa::columns,"New Term in tab");
+    auto newTermActionDown = createAction(fa::columns,"New Term Down",90);
+    auto newTermTabAction = createAction(fa::clone,"New Tab on the right");
+    auto insertFolderAction = createAction(fa::folder,"Choose a folder and add path in console ");
+    auto insertFileAction = createAction(fa::file,"Choose files and add in console ");
+    auto hideAction = createAction(fa::eyeslash,"Hide Console");
+    auto colorStyleAction = createAction(fa::blacktie,"Choose Color Style");
     ToolBar->addAction(hideAction) ;
     ToolBar->addAction(zoomInAction );
     ToolBar->addAction(zoomOutAction );
     ToolBar->addAction(fontAction );
     ToolBar->addAction(colorStyleAction );
+    ToolBar->addSeparator();
     ToolBar->addAction(searchAction );
     ToolBar->addAction( insertFileAction);
     ToolBar->addAction( insertFolderAction);
+    ToolBar->addSeparator();
     ToolBar->addAction(newTermTabAction );
     ToolBar->addAction(newTermAction );
+    ToolBar->addAction(newTermActionDown );
+    ToolBar->addSeparator();
     ToolBar->addAction(clearAction );
 
     connect(insertFileAction, &QAction::triggered, this,&MainWindow::chooseFilesAndPaste);
@@ -368,9 +394,20 @@ ads::CDockWidget* MainWindow::createNewTerminal()
        m_DockManager->addDockWidget(ads::RightDockWidgetArea, docknew);
     });
 
+    connect(newTermActionDown, &QAction::triggered, this,[this] {
+       ads::CDockWidget* docknew = createNewTerminal();
+       TerminalWidget* tn = qobject_cast<TerminalWidget*>(docknew->widget());
+       if (this->activeTerm != NULL)
+       {
+            tn->changeDir(this->activeTerm->workingDirectory());
+       }
+       m_DockManager->addDockWidget(ads::BottomDockWidgetArea, docknew);
+    });
+
+
     //ToolBar->addAction(ui.actionRestoreState);
 
-
+    ToolBar->setStyleSheet("background-color:black; color:grey");
     return DockWidget;
 }
 
@@ -388,11 +425,23 @@ void MainWindow::getFocusTerm()
 /** 
   * Create a QAction with a awesome font 
 ***/
-QAction *MainWindow::createAction(fa::icon ico )
+QAction *MainWindow::createAction(fa::icon ico, QString tooltip,int rotation)
 {
     QVariantMap options;
     auto result = new QAction("");
-    result->setIcon( awesome->icon( ico,options  ) );
+    if ( rotation != 0) {
+        QTransform tr;
+        tr.rotate(90);
+        auto icon= awesome->icon( ico,options  ) ;
+        QPixmap p = icon.pixmap(QSize(16,16));
+        p = p.transformed(tr);
+        result->setIcon( QIcon(p)  );
+    } 
+    else 
+    {
+      result->setIcon( awesome->icon( ico,options  ) );
+    }
+    result->setToolTip( tooltip );
     return result;
 }
 
@@ -405,6 +454,7 @@ TerminalWidget* MainWindow::createTerminalWidget()
     connect(t, &TerminalWidget::copyAvailable, this,[this] { qDebug() << "copyAvailable " << this->activeTerm->selectedText();  });
     return t;
 }
+
 void MainWindow::sendAll() {
  bool ok;
  QString text = QInputDialog::getText(0, "Input dialog", "command", QLineEdit::Normal, "", &ok);
@@ -417,6 +467,7 @@ void MainWindow::sendAll() {
         }
  }
 }
+
 void MainWindow::sendMany() {
  bool ok;
  QString text = QInputDialog::getMultiLineText(this, tr("Open Terminal with commands"),
@@ -457,34 +508,38 @@ void MainWindow::urlActived(const QUrl &u) {
     m_DockManager->addDockWidget(ads::RightDockWidgetArea, DockWidget);
 }
 
+/*********************************************
+  * Command recieve form QSingletonApplication
+***********************************************/
 void MainWindow::commandRecieved(QString cwd,QStringList cmd)
 {
  qDebug() << cmd;
  auto p = new parameterManager(cmd);
-/*
+
  if (p->shell)
  {
      if (p->nameDock.length()> 0)
        {
-         auto *dock = KDDockWidgets::DockRegistry::self()->dockByName(p->nameDock);
-         qDebug() << dock;
-         auto newdock= newDockWidget();
-         if (dock != 0x0)
-         {
-            dock->addDockWidgetAsTab(newdock);
-         }
-         else
-         {
-           qDebug() << " dock namle not found " << p->nameDock;
+         QMap<QString, ads::CDockWidget*> dMap =   this->m_DockManager->dockWidgetsMap();
+         foreach ( const auto& outerKey, dMap.keys() ) {
+              if (outerKey  == p->nameDock) {
+                     auto dw = createNewTerminal();  
+                     if (p->createintab)
+                     {
+	                m_DockManager->addDockWidgetTab( p->location, dw);
+                     } else {
+	                m_DockManager->addDockWidget(p->location, dw, dMap[outerKey]->dockAreaWidget());
+                     }
+              }
          }
      }
      else
      {
-         auto dock= newDockWidget();
-         addDockWidget(dock, p->location);
+           auto dw = createNewTerminal();  
+	   m_DockManager->addDockWidget(p->location, dw);
      }
    }
-*/
+
    if ( p->man)
    {
       urlActived(QUrl("https://man7.org/linux/man-pages/man1/"+p->nameMan+".1.html"));
