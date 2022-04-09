@@ -37,16 +37,16 @@ cvterm man ls : show the man of ls in a webpage.
 ![From githubuser0xFFFF](https://github.com/githubuser0xFFFF/Qt-Advanced-Docking-System/blob/master/doc/cfg_flag_FloatingContainerForceNativeTitleBar_true.png)
 
 # Help     
-name : add a new terminal close to the tab name 
- man : open a web page for the man 
+1. name : add a new terminal close to the tab name 
+2. man : open a web page for the man 
  
  OPTIONS :
 
--tab : create a terminal in the tab 
--righ : position in workspace 
--left: position in workspace 
--top: position in workspace 
--bottom: position in workspace 
+1. -tab : create a terminal in the tab 
+2. -righ : position in workspace 
+3. -left: position in workspace 
+4. -top: position in workspace 
+5. -bottom: position in workspace 
 
 # Video
 
