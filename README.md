@@ -36,6 +36,7 @@ cvterm man ls : show the man of ls in a webpage.
 
 ![From githubuser0xFFFF](https://github.com/githubuser0xFFFF/Qt-Advanced-Docking-System/blob/master/doc/cfg_flag_FloatingContainerForceNativeTitleBar_true.png)
 
+It's a singleInstance Application , so you can interacte with it with the same cmd.
 # Help     
 1. name : add a new terminal close to the tab name 
 2. man : open a web page for the man 
