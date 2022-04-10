@@ -49,6 +49,43 @@ It's a singleInstance Application , so you can interacte with it with the same c
 4. -top: position in workspace 
 5. -bottom: position in workspace 
 
+# Program your interface , your workspace.
+```
+./dterm &
+sleep 1 
+./dterm name Term1 &
+sleep 1
+./dterm name Term2 &
+sleep 1
+./dterm name Term3 &
+sleep 1
+./dterm name Term4 &
+sleep 1
+./dterm -bottom &
+sleep 1
+./dterm name Term6 &
+sleep 1
+./dterm name Term7 &
+sleep 1
+./dterm name Term8 &
+sleep 1
+./dterm name Term9 &
+sleep 1
+./dterm -bottom &
+sleep 1
+./dterm name Term11 &
+sleep 1
+./dterm name Term12 &
+sleep 1
+./dterm name Term13 &
+sleep 1
+```
+
+
+
+![](https://github.com/zebulon75018/vcterm/blob/main/screenshots/envsheel.gif)
+
+
 # Video
 
 [![First Demo ](https://img.youtube.com/vi/JBAkvO5jjtQ/0.jpg)](https://youtu.be/JBAkvO5jjtQ)
