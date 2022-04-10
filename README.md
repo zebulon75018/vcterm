@@ -85,6 +85,9 @@ sleep 1
 
 ![](https://github.com/zebulon75018/vcterm/blob/main/screenshots/envsheel.gif)
 
+# TODO
+
+When I close a windows , not hide it , but close it and close the terminal.
 
 # Video
 
