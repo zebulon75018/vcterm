@@ -59,6 +59,8 @@ It's a singleInstance Application , so you can interacte with it with the same c
 [![New feature ](https://img.youtube.com/vi/YRqGp4bD3Sw/0.jpg)](https://youtu.be/YRqGp4bD3Sw)
 
 
+Blog en francais:
+https://www.blogger.com/blog/post/edit/1673332321871142560/8502050071487911199
 
 
 
