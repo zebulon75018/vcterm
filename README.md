@@ -23,15 +23,15 @@ cvterm man ls : show the man of ls in a webpage.
 
 # Feature
 1. Embedded terminals inside one docking applicaton
-2. Can show help man page. ( qterm man ls )    ![](https://github.com/zebulon75018/vcterm/blob/main/screenshots/man2.gif)
-3. Can send the same command to all opened terminals ![](https://github.com/zebulon75018/vcterm/blob/main/screenshots/sendall.gif)
-4. Can open termian and send a command from a list a command
-5. Can change font ( size / family ) 
-6. Can  change the background by theme.
-7. Drag and drop path or file.   ![](https://github.com/zebulon75018/vcterm/blob/main/screenshots/Peek%202022-03-28%2000-46.gif)
-8. Choose files/directory by file/dir dialog  
-9. Find text in terminal 
-10. Docking like visual code.
+2. Can show help man page. ( qterm man ls )   ![](https://github.com/zebulon75018/vcterm/blob/main/screenshots/man2.gif)
+5. Can send the same command to all opened terminals ![](https://github.com/zebulon75018/vcterm/blob/main/screenshots/sendall.gif)
+6. Can open terminal and send a command from a list a command
+7. Can change font ( size / family ) 
+8. Can  change the background by theme.
+9. Drag and drop path or file.   ![](https://github.com/zebulon75018/vcterm/blob/main/screenshots/Peek%202022-03-28%2000-46.gif)
+10. Choose files/directory by file/dir dialog  
+11. Find text in terminal 
+12. Docking like visual code.
 ![](https://github.com/zebulon75018/vcterm/blob/main/screenshots/Peek%202022-03-28%2023-50.gif)
 
 ![From githubuser0xFFFF](https://github.com/githubuser0xFFFF/Qt-Advanced-Docking-System/blob/master/doc/cfg_flag_FloatingContainerForceNativeTitleBar_true.png)
