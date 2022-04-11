@@ -103,5 +103,9 @@ When I close a windows , not hide it , but close it and close the terminal.
 
 https://www.blogger.com/blog/post/edit/1673332321871142560/8502050071487911199
 
+# Other interesting projet
+
+https://gnunn1.github.io/tilix-web/
+
 
 
