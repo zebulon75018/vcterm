@@ -1,6 +1,8 @@
 # vcterm
 Terminal with docking as Visual Code and integrating with helpfull features...
 
+I'm looking for beta testeur ( charles ( dot ) vidal ( at ) gmail ( dot ) com
+
 # Prerequisity
 
 1. Qt 5
