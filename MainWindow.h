@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QLineEdit>
 
 #include "DockManager.h"
 #include "qtterminalwidget/terminalwidget.h"
@@ -11,6 +12,9 @@
 class QMenu;
 class QFileSystemModel;
 class QTreeView;
+class QClipboard;
+class QStatusBar;
+
 
 class MainWindow : public QMainWindow
 {
@@ -25,6 +29,7 @@ public slots:
     void urlActived(const QUrl &u);
     void commandRecieved(QString cwd,QStringList cmd);
     void sendAll();
+    void sendAllPassword();
     void sendMany();
     void getFocusTerm();
     void chooseFont();
@@ -32,6 +37,9 @@ public slots:
     void chooseFileAndPaste ();
     void chooseFilesAndPaste ();
     void chooseDirectoryAndPaste();
+    void selectionChangeClipboard();
+    void onDirContextMenu(const QPoint &p);
+
 
 
 private:
@@ -41,6 +49,8 @@ private:
    ads::CDockWidget* createNewTerminal();
    ads::CDockWidget* createFileSystemTreeDockWidget();
    TerminalWidget* createTerminalWidget();
+
+   void sendAllPrivate(QLineEdit::EchoMode mode,QString label);
 
 
 
@@ -52,6 +62,9 @@ private:
     QFileSystemModel *m_filesystemmodel;
     QTreeView *m_treeview;
     QtAwesome *awesome;
+    QClipboard *clipboard;
+    QStatusBar *statusbar;
+
 };
 
 #endif // MAINWINDOW_H

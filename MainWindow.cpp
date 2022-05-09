@@ -1,6 +1,8 @@
 #include "MainWindow.h"
 #include "parametermanager.h"
 
+#include "DockAreaWidget.h"
+
 
 #include <QUrl>
 #include <QMenu>
@@ -19,6 +21,10 @@
 #include <QFileSystemModel>
 #include <QTreeView>
 #include <QToolBar>
+#include <QClipboard>
+#include <QGuiApplication>
+#include <QStatusBar>
+#include <QMimeData>
 
 
 
@@ -30,6 +36,10 @@ MainWindow::MainWindow(QWidget *parent) :
     this->awesome = new QtAwesome();
     awesome->initFontAwesome();
     this->activeTerm = NULL;
+    this->clipboard = QGuiApplication::clipboard();
+    this->statusbar = this->statusBar();
+
+    connect( this->clipboard, &QClipboard::selectionChanged,this,&MainWindow::selectionChangeClipboard );
     createMenu();
 
     // Create the dock manager. Because the parent parameter is a QMainWindow
@@ -38,6 +48,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
     auto FileSystemWidget = createFileSystemTreeDockWidget();
+
     auto ToolBar = FileSystemWidget->createDefaultToolBar();
     m_DockManager->addDockWidget(ads::LeftDockWidgetArea, FileSystemWidget);
     FileSystemWidget->viewToggled(false);
@@ -186,6 +197,9 @@ void MainWindow::createMenu()
     auto sendallAction = m_terminalMenu->addAction(QStringLiteral("Send All"));
     connect(sendallAction, &QAction::triggered, this,&MainWindow::sendAll);
 
+    auto sendallActionPass = m_terminalMenu->addAction(QStringLiteral("Send All Password"));
+    connect(sendallActionPass,&QAction::triggered, this,&MainWindow::sendAllPassword);
+
     auto sendmanyAction = m_terminalMenu->addAction(QStringLiteral("Send Many"));
     connect(sendmanyAction, &QAction::triggered, this,&MainWindow::sendMany);
 
@@ -269,10 +283,13 @@ void MainWindow::chooseDirectoryAndPaste ()
 ads::CDockWidget* MainWindow::createFileSystemTreeDockWidget()
 {
         static int FileSystemCount = 0;
-        QTreeView* m_treeview = new QTreeView();
+        m_treeview = new QTreeView();
         m_treeview ->setFrameShape(QFrame::NoFrame);
         m_treeview ->setSelectionMode(QAbstractItemView::ExtendedSelection);
         m_treeview ->setDragEnabled(true);
+
+        m_treeview->setContextMenuPolicy(Qt::CustomContextMenu);
+        connect(m_treeview, SIGNAL(customContextMenuRequested(const QPoint &)), this, SLOT(onDirContextMenu(const QPoint &)));
         //w->setAcceptDrops(true);
         //w->setDropIndicatorShown(true);
 
@@ -298,10 +315,10 @@ ads::CDockWidget* MainWindow::createFileSystemTreeDockWidget()
         ToolBar->addAction(hideAction );
         ToolBar->addAction(colorAction );
         connect(hideAction, &QAction::triggered, this,[tva] { tva->triggered();  });
-        connect(colorAction, &QAction::triggered, this,[m_treeview,this] {
+        connect(colorAction, &QAction::triggered, this,[this] {
                                      QAction *s =  qobject_cast<QAction*>(sender());
-                                     if (s->isChecked())  m_treeview->setStyleSheet("background: #050505;color: white");  
-                                     else m_treeview->setStyleSheet("background: white;color: black");  
+                                     if (s->isChecked())  this->m_treeview->setStyleSheet("background: #050505;color: white");  
+                                     else this->m_treeview->setStyleSheet("background: white;color: black");  
                                  });
         // Hide file tree widget
         m_treeview->expandAll();
@@ -312,6 +329,8 @@ ads::CDockWidget* MainWindow::createNewTerminal()
 {
 
     TerminalWidget *t= createTerminalWidget();
+    QList<QAction *> lstAction;
+
 /*
     connect(t, &TerminalWidget::termGetFocus, this,[this] {  this->activeTerm =  qobject_cast<TerminalWidget*>(sender());
       qDebug() << this->activeTerm->workingDirectory();
@@ -324,24 +343,27 @@ ads::CDockWidget* MainWindow::createNewTerminal()
 
      });*/
     //connect(t, &TerminalWidget::termLostFocus,[this] { this->activeTerm =  NULL; });
-
     ads::CDockWidget* DockWidget = new ads::CDockWidget(QString("Term") + QString::number(m_listerm.length()));
-    connect(DockWidget, & ads::CDockWidget::closed, this,[t] { qDebug() <<"Doc Cloed ";    });
-    connect(t, &TerminalWidget::finished, this,[DockWidget,t] { qDebug() <<"Terminal Finished Cloed ";/* Todo erase from list */    });
+    DockWidget->setFeature(ads::CDockWidget::DockWidgetDeleteOnClose, true); 
+    connect(DockWidget, & ads::CDockWidget::closed, this,[t] { delete(t) ; qDebug() <<"Doc Closed ";    });
+    connect(t, &TerminalWidget::finished, this,[DockWidget,t] {
+           DockWidget->close(); qDebug() <<"Terminal Finished Closed ";
+           /* Todo erase from list */   
+          });
     DockWidget->setWidget(t);
     auto ToolBar = DockWidget->createDefaultToolBar();
     QAction * tva = DockWidget->toggleViewAction();
     m_toggleMenu->addAction(tva);
 
     QVariantMap options;
-    auto zoomInAction = createAction(fa::plus,"Font size increase");
-    auto zoomOutAction = createAction(fa::minus,"Font size Decrease");
+    auto zoomInAction = createAction(fa::expand,"Font size increase");
+    auto zoomOutAction = createAction(fa::compress,"Font size Decrease");
     auto fontAction = createAction(fa::font,"Choose Font");
     auto searchAction = createAction(fa::search,"Search in console");
     auto clearAction = createAction(fa::bath,"Clear");
-    auto newTermAction = createAction(fa::columns,"New Term in tab");
+    auto newTermAction = createAction(fa::clone,"New Term in tab");
     auto newTermActionDown = createAction(fa::columns,"New Term Down",90);
-    auto newTermTabAction = createAction(fa::clone,"New Tab on the right");
+    auto newTermTabAction = createAction(fa::plus,"New Tab on the right");
     auto insertFolderAction = createAction(fa::folder,"Choose a folder and add path in console ");
     auto insertFileAction = createAction(fa::file,"Choose files and add in console ");
     auto hideAction = createAction(fa::eyeslash,"Hide Console");
@@ -352,26 +374,30 @@ ads::CDockWidget* MainWindow::createNewTerminal()
     ToolBar->addAction(fontAction );
     ToolBar->addAction(colorStyleAction );
     ToolBar->addSeparator();
+    ToolBar->addAction(clearAction );
+    ToolBar->addSeparator();
     ToolBar->addAction(searchAction );
     ToolBar->addAction( insertFileAction);
     ToolBar->addAction( insertFolderAction);
     ToolBar->addSeparator();
-    ToolBar->addAction(newTermTabAction );
     ToolBar->addAction(newTermAction );
     ToolBar->addAction(newTermActionDown );
-    ToolBar->addSeparator();
-    ToolBar->addAction(clearAction );
+    ToolBar->addAction(newTermTabAction );
+    lstAction.append(zoomInAction );
+    lstAction.append(zoomOutAction );
+    lstAction.append(fontAction );
+    lstAction.append(clearAction );
 
-    connect(insertFileAction, &QAction::triggered, this,&MainWindow::chooseFilesAndPaste);
+    connect(insertFileAction,   &QAction::triggered, this,&MainWindow::chooseFilesAndPaste);
     connect(insertFolderAction, &QAction::triggered, this,&MainWindow::chooseDirectoryAndPaste);
-    connect(zoomInAction, &QAction::triggered, this,[t] { t->zoomIn();  });
-    connect(zoomOutAction, &QAction::triggered, this,[t] { t->zoomOut();  });
-    connect(searchAction, &QAction::triggered, this,[t] { t->toggleShowSearchBar();  });
-    connect(clearAction, &QAction::triggered, this,[t] { t->clear();  });
-    connect(fontAction, &QAction::triggered, this,[t] { t->clear();  });
-    connect(hideAction, &QAction::triggered, this,[tva] { tva->triggered();  });
-    connect(fontAction, &QAction::triggered, this,&MainWindow::chooseFont);
-    connect(colorStyleAction, &QAction::triggered, this,&MainWindow::chooseColorStyle);
+    connect(zoomInAction,       &QAction::triggered, this,[t] { t->zoomIn();  });
+    connect(zoomOutAction,      &QAction::triggered, this,[t] { t->zoomOut();  });
+    connect(searchAction,       &QAction::triggered, this,[t] { t->toggleShowSearchBar();  });
+    connect(clearAction,        &QAction::triggered, this,[t] { t->clear();  });
+    connect(fontAction,         &QAction::triggered, this,[t] { t->clear();  });
+    connect(hideAction,         &QAction::triggered, this,[tva] { tva->triggered();  });
+    connect(fontAction,         &QAction::triggered, this,&MainWindow::chooseFont);
+    connect(colorStyleAction,   &QAction::triggered, this,&MainWindow::chooseColorStyle);
 
     connect(newTermTabAction, &QAction::triggered, this,[this] {
       ads::CDockWidget* docknew = createNewTerminal();
@@ -404,10 +430,24 @@ ads::CDockWidget* MainWindow::createNewTerminal()
        m_DockManager->addDockWidget(ads::BottomDockWidgetArea, docknew);
     });
 
+    t->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(t,&QWidget::customContextMenuRequested, 
+        t,[this,t,lstAction] (const QPoint &p) {
+        QMenu menu;
+        foreach (QAction *ac, lstAction) {
+            menu.addAction(ac);
+            ac->setText(ac->toolTip());
+        }
+        menu.exec(t->mapToGlobal(p));
+        foreach (QAction *ac, lstAction) {
+           ac->setText("");
+        }
+       }
+    );
 
     //ToolBar->addAction(ui.actionRestoreState);
 
-    ToolBar->setStyleSheet("background-color:black; color:grey");
+    ToolBar->setStyleSheet("background-color:black; color:lightgrey");
     return DockWidget;
 }
 
@@ -456,8 +496,16 @@ TerminalWidget* MainWindow::createTerminalWidget()
 }
 
 void MainWindow::sendAll() {
+   sendAllPrivate(QLineEdit::Normal,"command");
+}
+
+void MainWindow::sendAllPassword() {
+   sendAllPrivate(QLineEdit::Password,"password be carefull the text will be pass in clear to terminal");
+}
+
+void MainWindow::sendAllPrivate(QLineEdit::EchoMode mode,QString label) {
  bool ok;
- QString text = QInputDialog::getText(0, "Input dialog", "command", QLineEdit::Normal, "", &ok);
+ QString text = QInputDialog::getText(0, "Input dialog", label, mode, "", &ok);
  text = text + "\n";
  if (ok && !text.isEmpty()) {
         TerminalWidget* term;
@@ -467,6 +515,8 @@ void MainWindow::sendAll() {
         }
  }
 }
+
+
 
 void MainWindow::sendMany() {
  bool ok;
@@ -506,6 +556,41 @@ void MainWindow::urlActived(const QUrl &u) {
     ads::CDockWidget* DockWidget = new ads::CDockWidget(u.toString());
     DockWidget->setWidget(wv);
     m_DockManager->addDockWidget(ads::RightDockWidgetArea, DockWidget);
+}
+
+void MainWindow::selectionChangeClipboard() {
+     const QMimeData *mimeData = clipboard->mimeData();
+
+     if (mimeData->hasImage()) {
+        //setPixmap(qvariant_cast<QPixmap>(mimeData->imageData()));
+        this->statusbar->showMessage("clipboard changed: Image  " ,1000);
+    } else if (mimeData->hasText()) {
+        this->statusbar->showMessage("clipboard changed: " + mimeData->text() ,1000);
+    } else if (mimeData->hasHtml()) {
+        //this->statusbar->showMessage("clipboard changed: Html  " ,1000);
+        this->statusbar->showMessage("clipboard changed: " + mimeData->text() ,1000);
+        //setText(mimeData->html());
+        //setTextFormat(Qt::RichText);
+    } else {
+        this->statusbar->showMessage("clipboard changed can't display " ,1000);
+    }
+}
+
+void MainWindow::onDirContextMenu(const QPoint &p) 
+{
+    QModelIndex index = m_treeview->indexAt(p);
+    qDebug() << " index.isValid()  ";
+    QMenu *menu = new QMenu;
+ 
+     //QString fileName = this->model()->data(this->model()->index(index.row(), 0),0).toString();
+     menu->addAction(QString("Open"), this, [this] {});
+     menu->addAction(QString("Rename"), this, [this] {});
+     menu->exec(m_treeview->viewport()->mapToGlobal(p));
+     menu->deleteLater();
+   /* if (index.isValid() && index.row() % 2 == 0) {
+        contextMenu->exec(m_treeview->viewport()->mapToGlobal(p));
+    }    
+*/
 }
 
 /*********************************************
