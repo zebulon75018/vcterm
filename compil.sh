@@ -14,6 +14,10 @@ cd ..
 git clone https://github.com/Skycoder42/QSingleInstance
 ############
 git clone https://github.com/gamecreature/QtAwesome
+cd QtAwesome/QtAwesome
+qmake
+make 
+cd ../..
 ############
 qmake
 make
