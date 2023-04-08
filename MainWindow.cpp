@@ -33,8 +33,8 @@ MainWindow::MainWindow(QWidget *parent) :
 {
 
 
-    this->awesome = new QtAwesome();
-    awesome->initFontAwesome();
+    this->awesome = new fa::QtAwesome();
+    this->awesome->initFontAwesome();
     this->activeTerm = NULL;
     this->clipboard = QGuiApplication::clipboard();
     this->statusbar = this->statusBar();
@@ -309,8 +309,8 @@ ads::CDockWidget* MainWindow::createFileSystemTreeDockWidget()
         //ViewMenu->addAction(DockWidget->toggleViewAction());
         QAction * tva = DockWidget->toggleViewAction();
         m_toggleMenu->addAction(tva);
-        auto hideAction = createAction(fa::eyeslash,"Hide");
-        auto colorAction = createAction(fa::blacktie,"Change Dark/White");
+        auto hideAction = createAction("fa_solid eyeslash","Hide");
+        auto colorAction = createAction("fa_solid blacktie","Change Dark/White");
         colorAction->setCheckable(true);
         ToolBar->addAction(hideAction );
         ToolBar->addAction(colorAction );
@@ -356,18 +356,18 @@ ads::CDockWidget* MainWindow::createNewTerminal()
     m_toggleMenu->addAction(tva);
 
     QVariantMap options;
-    auto zoomInAction = createAction(fa::expand,"Font size increase");
-    auto zoomOutAction = createAction(fa::compress,"Font size Decrease");
-    auto fontAction = createAction(fa::font,"Choose Font");
-    auto searchAction = createAction(fa::search,"Search in console");
-    auto clearAction = createAction(fa::bath,"Clear");
-    auto newTermAction = createAction(fa::clone,"New Term in tab");
-    auto newTermActionDown = createAction(fa::columns,"New Term Down",90);
-    auto newTermTabAction = createAction(fa::plus,"New Tab on the right");
-    auto insertFolderAction = createAction(fa::folder,"Choose a folder and add path in console ");
-    auto insertFileAction = createAction(fa::file,"Choose files and add in console ");
-    auto hideAction = createAction(fa::eyeslash,"Hide Console");
-    auto colorStyleAction = createAction(fa::blacktie,"Choose Color Style");
+    auto zoomInAction = createAction("fa_solid expand","Font size increase");
+    auto zoomOutAction = createAction("fa_solid compress","Font size Decrease");
+    auto fontAction = createAction("fa_solid font","Choose Font");
+    auto searchAction = createAction("fa_solid search","Search in console");
+    auto clearAction = createAction("fa_solid bath","Clear");
+    auto newTermAction = createAction("fa_solid clone","New Term in tab");
+    auto newTermActionDown = createAction("fa_solid columns","New Term Down",90);
+    auto newTermTabAction = createAction("fa_solid plus","New Tab on the right");
+    auto insertFolderAction = createAction("fa_solid folder","Choose a folder and add path in console ");
+    auto insertFileAction = createAction("fa_solid file","Choose files and add in console ");
+    auto hideAction = createAction("fa_solid eyeslash","Hide Console");
+    auto colorStyleAction = createAction("fa_solid blacktie","Choose Color Style");
     ToolBar->addAction(hideAction) ;
     ToolBar->addAction(zoomInAction );
     ToolBar->addAction(zoomOutAction );
@@ -465,7 +465,7 @@ void MainWindow::getFocusTerm()
 /** 
   * Create a QAction with a awesome font 
 ***/
-QAction *MainWindow::createAction(fa::icon ico, QString tooltip,int rotation)
+QAction *MainWindow::createAction(QString ico, QString tooltip,int rotation)
 {
     QVariantMap options;
     auto result = new QAction("");

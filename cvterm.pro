@@ -1,5 +1,8 @@
 ADS_OUT_ROOT = Qt-Advanced-Docking-System
 
+CONFIG+=fontAwesomeFree
+
+
 OBJECTS_DIR = .obj
 MOC_DIR     = .moc
 
@@ -8,7 +11,7 @@ QT += core gui widgets webkitwidgets network
 include(QtAwesome/QtAwesome/QtAwesome.pri )
 include(QSingleInstance/de_skycoder42_qsingleinstance.pri)
 
-TARGET = cvterm
+TARGET = vcterm
 #DESTDIR = $${ADS_OUT_ROOT}/lib
 TEMPLATE = app
 CONFIG += c++14
@@ -32,7 +35,7 @@ HEADERS += \
 #        MainWindow.ui
         
 
-LIBS += -L$${ADS_OUT_ROOT}/lib -L./qtterminalwidget/
+LIBS += -L$${ADS_OUT_ROOT}/lib -L./qtterminalwidget/ -L./QtAwesome/QtAwesome/
 LIBS +=  -lqtterminalwidget -lX11
 
 # Dependency: AdvancedDockingSystem (shared)
@@ -50,6 +53,8 @@ CONFIG(debug, debug|release){
 else{
     LIBS += -lqtadvanceddocking
 }
+
+LIBS += -lQtAwesome
 
 INCLUDEPATH += Qt-Advanced-Docking-System/src QSingleInstance
 DEPENDPATH += Qt-Advanced-Docking-System/src    

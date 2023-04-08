@@ -6,7 +6,7 @@
 
 #include "DockManager.h"
 #include "qtterminalwidget/terminalwidget.h"
-#include "QtAwesome.h"
+#include "QtAwesome/QtAwesome/QtAwesome.h"
 
 
 class QMenu;
@@ -44,7 +44,7 @@ public slots:
 
 private:
    void createMenu();
-   QAction *createAction(fa::icon ico, QString tooltip="",int rotation = 0 );
+   QAction *createAction(QString ico, QString tooltip="",int rotation = 0 );
    QString readFile(QString filename);
    ads::CDockWidget* createNewTerminal();
    ads::CDockWidget* createFileSystemTreeDockWidget();
@@ -61,7 +61,7 @@ private:
     QMenu *m_toggleMenu;
     QFileSystemModel *m_filesystemmodel;
     QTreeView *m_treeview;
-    QtAwesome *awesome;
+    fa::QtAwesome *awesome;
     QClipboard *clipboard;
     QStatusBar *statusbar;
 
