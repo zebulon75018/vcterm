@@ -468,6 +468,7 @@ void MainWindow::getFocusTerm()
 QAction *MainWindow::createAction(QString ico, QString tooltip,int rotation)
 {
     QVariantMap options;
+    options.insert("color", QColor(Qt::lightGray));
     auto result = new QAction("");
     if ( rotation != 0) {
         QTransform tr;
