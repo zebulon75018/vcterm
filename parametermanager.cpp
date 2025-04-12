@@ -10,60 +10,75 @@ parameterManager::parameterManager(QStringList params)
       if ( params[n].toLower() =="-h" || params[n].toLower() == "--help") 
       { 
 
-         helpRequest = true;
+         mode = Mode::Help;
          return;
        }
      
-      shell = true;
-      if ( params[n] =="-right") { location=ads::RightDockWidgetArea; }
-      if ( params[n] =="-left") { location= ads::LeftDockWidgetArea;}
-      if ( params[n] =="-top") { location= ads::TopDockWidgetArea; }
-      if ( params[n] =="-bottom") { location= ads::BottomDockWidgetArea; }
+      if ( params[n] =="-right") { location=ads::RightDockWidgetArea;    mode = Mode::Shell; }
+      if ( params[n] =="-left") { location= ads::LeftDockWidgetArea;     mode = Mode::Shell; }
+      if ( params[n] =="-top") { location= ads::TopDockWidgetArea;       mode = Mode::Shell; }
+      if ( params[n] =="-bottom") { location= ads::BottomDockWidgetArea; mode = Mode::Shell; }
       if ( params[n] =="-tab") { createintab = true; }
 
       if ( params[n] =="man") {
+         mode = Mode::Man;
          if (params.length() >n +1)
          {
-             nameMan = params [n+1];
-            man  = true;
-            shell = false;
-            edit  = false;
+            nameParam = params [n+1];
          }
       }
-
       if ( params[n] =="edit") {
           if (params.length() >n +1)
           {
             nameFileToEdit = params[n+1];
-            edit  = true;
-            man  = false;
-            shell = false;
+            mode = Mode::Edit;
           }
       }
+      if ( params[n] =="view") {
+          if (params.length() >n +1)
+          {
+            nameFileToEdit = params[n+1];
+            mode = Mode::View;
+          }
+     }
      // Name of tab terminal
       if ( params[n] =="name") {
           if (params.length() >n +1)
           {
               nameDock = params[n+1];
               qDebug() << " NAME " << nameDock;
-              shell = true;
-              man  = false;
+              mode = Mode::Shell;
               //DockerRegistry.self();
-
         }
       }
+     if ( params[n] =="bookmark") {
+         mode = Mode::Bookmark;
+         if (params.length() >n +1)
+         {
+            nameParam = params [n+1];
+         }
+      }
+
   }
 }
+
 bool parameterManager::isHelpRequest()
 {
-  return helpRequest;
+  return mode == Mode::Help;
+}
+
+bool parameterManager::isBookmarkRequest()
+{
+  return mode == Mode::Bookmark;
 }
 
 void parameterManager::showHelp()
 {
          qInfo() <<  " name ";
          qInfo() <<  " man ";
-         qInfo() <<  " edit : ";
+         qInfo() <<  " edit [file] ";
+         qInfo() <<  " view [file] ";
+         qInfo() <<  " bookmark [name]  ";
          qInfo() <<  " OPTIONS ";
 
       qInfo() << "\t\t-tab\tcreate in tab";

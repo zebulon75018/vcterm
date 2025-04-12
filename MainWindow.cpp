@@ -1,8 +1,17 @@
 #include "MainWindow.h"
+#include <memory> // à mettre tout en haut pour std::unique_ptr
 #include "parametermanager.h"
+#include "typeFile.h"
+#include "bookmarks.h"
 
 #include "DockAreaWidget.h"
 
+//#include  "templateengine/template.h"
+//#include "minja/minja.hpp"
+
+//#include "inja/inja.hpp"
+//#include "nlohmann/json.hpp"
+#include "templateEngineQt.h"
 
 #include <QUrl>
 #include <QMenu>
@@ -13,7 +22,6 @@
 #include <QString>
 #include <QTextEdit>
 #include <QWebView>
-#include <QWebPage>
 #include <QWebFrame>
 #include <QInputDialog>
 #include <QFontDialog>
@@ -26,16 +34,25 @@
 #include <QStatusBar>
 #include <QMimeData>
 
+#include <QTextCodec>
+
+#include <iostream>
+
+//using json = nlohmann::ordered_json;
+//using namespace stefanfrings;
 
 
-MainWindow::MainWindow(QWidget *parent) :
+
+
+MainWindow::MainWindow(QString adir,QWidget *parent) :
     QMainWindow(parent)
 {
 
 
+    this->appdir = adir;
     this->awesome = new fa::QtAwesome();
     this->awesome->initFontAwesome();
-    this->activeTerm = NULL;
+    this->activeTerm = nullptr;
     this->clipboard = QGuiApplication::clipboard();
     this->statusbar = this->statusBar();
 
@@ -51,7 +68,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     auto ToolBar = FileSystemWidget->createDefaultToolBar();
     m_DockManager->addDockWidget(ads::LeftDockWidgetArea, FileSystemWidget);
-    FileSystemWidget->viewToggled(false);
+    FileSystemWidget->toggleView(false);
 
     // Create example content label - this can be any application specific
     // widget
@@ -67,15 +84,21 @@ MainWindow::~MainWindow()
 
 void MainWindow::createMenu()
 {
+
+    BookmarkManager bookmarks;
+    bookmarks.loadFromFile(BookmarkManager::pathBookmark());
+
     auto menubar = menuBar();
     auto fileMenu = new QMenu(QStringLiteral("File"));
     m_toggleMenu = new QMenu(QStringLiteral("Toggle"));
     auto m_terminalMenu = new QMenu(QStringLiteral("Command"));
+    auto m_bookmark = new QMenu(QStringLiteral("Bookmark"));
     auto prefMenu = new QMenu(QStringLiteral("Visual"));
     menubar->addMenu(fileMenu);
     menubar->addMenu(m_toggleMenu);
     menubar->addMenu(prefMenu);
     menubar->addMenu(m_terminalMenu);
+    menubar->addMenu(m_bookmark);
 
 
     // Add the toggleViewAction of the dock widget to the menu to give
@@ -94,7 +117,7 @@ void MainWindow::createMenu()
     });
 
     connect(fileChooseAction, &QAction::triggered, this, [this] {
-      if ( this->activeTerm != NULL ) 
+      if ( this->activeTerm != nullptr ) 
       {
          QString filename = QFileDialog::getOpenFileName(this, tr("Choose File"), this->activeTerm->workingDirectory(), tr("Files (*)"));
          if (filename!="")
@@ -106,7 +129,7 @@ void MainWindow::createMenu()
 
   
     connect(filesChooseAction, &QAction::triggered, this, [this] {
-      if ( this->activeTerm != NULL ) 
+      if ( this->activeTerm != nullptr ) 
       {
          QStringList fileNames;
 
@@ -120,7 +143,7 @@ void MainWindow::createMenu()
 
 
     connect(dirChooseAction, &QAction::triggered, this, [this] {
-      if ( this->activeTerm != NULL ) 
+      if ( this->activeTerm != nullptr ) 
       {
         QString dir = QFileDialog::getExistingDirectory(this, tr("Open Directory"),
                                              this->activeTerm->workingDirectory(),
@@ -170,6 +193,12 @@ void MainWindow::createMenu()
        */
     });
 
+
+    foreach ( QString bname , bookmarks.getBookmarkNames())
+    {
+      m_bookmark->addAction(bname);
+    }
+
     //auto layoutEqually = fileMenu->addAction(QStringLiteral("Layout Equally"));
     //connect(layoutEqually, &QAction::triggered, this, &MainWindow::layoutEqually);
 
@@ -204,6 +233,7 @@ void MainWindow::createMenu()
     connect(sendmanyAction, &QAction::triggered, this,&MainWindow::sendMany);
 
 
+
 }
 
 void MainWindow::chooseFont() 
@@ -235,7 +265,7 @@ void MainWindow::chooseColorStyle()
 
 void MainWindow::chooseFileAndPaste () 
 {
-      if ( this->activeTerm != NULL ) 
+      if ( this->activeTerm != nullptr ) 
       {
          QString filename = QFileDialog::getOpenFileName(this, tr("Choose File"), this->activeTerm->workingDirectory(), tr("Files (*)"));
          if (filename!="")
@@ -248,7 +278,7 @@ void MainWindow::chooseFileAndPaste ()
   
 void MainWindow::chooseFilesAndPaste () 
 {
-      if ( this->activeTerm != NULL ) 
+      if ( this->activeTerm != nullptr ) 
       {
          QStringList fileNames;
 
@@ -263,7 +293,7 @@ void MainWindow::chooseFilesAndPaste ()
 
 void MainWindow::chooseDirectoryAndPaste () 
 {
-      if ( this->activeTerm != NULL ) 
+      if ( this->activeTerm != nullptr ) 
       {
         QString dir = QFileDialog::getExistingDirectory(this, tr("Open Directory"),
                                              this->activeTerm->workingDirectory(),
@@ -282,174 +312,64 @@ void MainWindow::chooseDirectoryAndPaste ()
 //============================================================================
 ads::CDockWidget* MainWindow::createFileSystemTreeDockWidget()
 {
-        static int FileSystemCount = 0;
-        m_treeview = new QTreeView();
-        m_treeview ->setFrameShape(QFrame::NoFrame);
-        m_treeview ->setSelectionMode(QAbstractItemView::ExtendedSelection);
-        m_treeview ->setDragEnabled(true);
+    static int FileSystemCount = 0;
 
-        m_treeview->setContextMenuPolicy(Qt::CustomContextMenu);
-        connect(m_treeview, SIGNAL(customContextMenuRequested(const QPoint &)), this, SLOT(onDirContextMenu(const QPoint &)));
-        //w->setAcceptDrops(true);
-        //w->setDropIndicatorShown(true);
+    m_treeview = createConfiguredTreeView();
+    m_filesystemmodel = createAndSetFileSystemModel(m_treeview);
 
-        m_filesystemmodel = new QFileSystemModel(m_treeview);
-        m_filesystemmodel->setRootPath(QDir::currentPath());
-        m_treeview->setModel(m_filesystemmodel);
-        for (int i = 1; i < m_filesystemmodel->columnCount(); ++i)
-                m_treeview->hideColumn(i);
-        ads::CDockWidget* DockWidget = new ads::CDockWidget(QString("Filesystem %1")
-                .arg(FileSystemCount++));
-        DockWidget->setWidget(m_treeview);
-        DockWidget->setFeature(ads::CDockWidget::DockWidgetClosable, false);
-        DockWidget->setFeature(ads::CDockWidget::DockWidgetMovable, false);
-        DockWidget->setFeature(ads::CDockWidget::DockWidgetFloatable, false);
+    auto dock = new ads::CDockWidget(QString("Filesystem %1").arg(FileSystemCount++));
+    dock->setWidget(m_treeview);
+    dock->setFeature(ads::CDockWidget::DockWidgetClosable, false);
+    dock->setFeature(ads::CDockWidget::DockWidgetMovable, false);
+    dock->setFeature(ads::CDockWidget::DockWidgetFloatable, false);
 
-        auto ToolBar = DockWidget->createDefaultToolBar();
-        //ViewMenu->addAction(DockWidget->toggleViewAction());
-        QAction * tva = DockWidget->toggleViewAction();
-        m_toggleMenu->addAction(tva);
-        auto hideAction = createAction("fa_solid eyeslash","Hide");
-        auto colorAction = createAction("fa_solid blacktie","Change Dark/White");
-        colorAction->setCheckable(true);
-        ToolBar->addAction(hideAction );
-        ToolBar->addAction(colorAction );
-        connect(hideAction, &QAction::triggered, this,[tva] { tva->triggered();  });
-        connect(colorAction, &QAction::triggered, this,[this] {
-                                     QAction *s =  qobject_cast<QAction*>(sender());
-                                     if (s->isChecked())  this->m_treeview->setStyleSheet("background: #050505;color: white");  
-                                     else this->m_treeview->setStyleSheet("background: white;color: black");  
-                                 });
-        // Hide file tree widget
-        m_treeview->expandAll();
-        return DockWidget;
+    configureFileSystemToolbar(dock, m_treeview);
+
+    return dock;
 }
+
 
 ads::CDockWidget* MainWindow::createNewTerminal()
 {
+    TerminalWidget* t = createTerminalWidget();
+    auto dw = new ads::CDockWidget(QString("Term") + QString::number(m_listerm.length()));
 
-    TerminalWidget *t= createTerminalWidget();
-    QList<QAction *> lstAction;
-
-/*
-    connect(t, &TerminalWidget::termGetFocus, this,[this] {  this->activeTerm =  qobject_cast<TerminalWidget*>(sender());
-      qDebug() << this->activeTerm->workingDirectory();
-      //m_filesystemmodel->setRootPath(this->activeTerm->workingDirectory());
-      auto index =  m_filesystemmodel->index(this->activeTerm->workingDirectory());
-      qDebug() << m_filesystemmodel->index(this->activeTerm->workingDirectory()).isValid();
-      m_treeview->expand(index);
-      m_treeview->scrollTo(index);
-      //m_treeview->setCurrentIndex(m_filesystemmodel->index(this->activeTerm->workingDirectory()));
-
-     });*/
-    //connect(t, &TerminalWidget::termLostFocus,[this] { this->activeTerm =  NULL; });
-    ads::CDockWidget* DockWidget = new ads::CDockWidget(QString("Term") + QString::number(m_listerm.length()));
-    DockWidget->setFeature(ads::CDockWidget::DockWidgetDeleteOnClose, true); 
-    connect(DockWidget, & ads::CDockWidget::closed, this,[t] { delete(t) ; qDebug() <<"Doc Closed ";    });
-    connect(t, &TerminalWidget::finished, this,[DockWidget,t] {
-           DockWidget->close(); qDebug() <<"Terminal Finished Closed ";
-           /* Todo erase from list */   
-          });
-    DockWidget->setWidget(t);
-    auto ToolBar = DockWidget->createDefaultToolBar();
-    QAction * tva = DockWidget->toggleViewAction();
-    m_toggleMenu->addAction(tva);
-
-    QVariantMap options;
-    auto zoomInAction = createAction("fa_solid expand","Font size increase");
-    auto zoomOutAction = createAction("fa_solid compress","Font size Decrease");
-    auto fontAction = createAction("fa_solid font","Choose Font");
-    auto searchAction = createAction("fa_solid search","Search in console");
-    auto clearAction = createAction("fa_solid bath","Clear");
-    auto newTermAction = createAction("fa_solid clone","New Term in tab");
-    auto newTermActionDown = createAction("fa_solid columns","New Term Down",90);
-    auto newTermTabAction = createAction("fa_solid plus","New Tab on the right");
-    auto insertFolderAction = createAction("fa_solid folder","Choose a folder and add path in console ");
-    auto insertFileAction = createAction("fa_solid file","Choose files and add in console ");
-    auto hideAction = createAction("fa_solid eyeslash","Hide Console");
-    auto colorStyleAction = createAction("fa_solid blacktie","Choose Color Style");
-    ToolBar->addAction(hideAction) ;
-    ToolBar->addAction(zoomInAction );
-    ToolBar->addAction(zoomOutAction );
-    ToolBar->addAction(fontAction );
-    ToolBar->addAction(colorStyleAction );
-    ToolBar->addSeparator();
-    ToolBar->addAction(clearAction );
-    ToolBar->addSeparator();
-    ToolBar->addAction(searchAction );
-    ToolBar->addAction( insertFileAction);
-    ToolBar->addAction( insertFolderAction);
-    ToolBar->addSeparator();
-    ToolBar->addAction(newTermAction );
-    ToolBar->addAction(newTermActionDown );
-    ToolBar->addAction(newTermTabAction );
-    lstAction.append(zoomInAction );
-    lstAction.append(zoomOutAction );
-    lstAction.append(fontAction );
-    lstAction.append(clearAction );
-
-    connect(insertFileAction,   &QAction::triggered, this,&MainWindow::chooseFilesAndPaste);
-    connect(insertFolderAction, &QAction::triggered, this,&MainWindow::chooseDirectoryAndPaste);
-    connect(zoomInAction,       &QAction::triggered, this,[t] { t->zoomIn();  });
-    connect(zoomOutAction,      &QAction::triggered, this,[t] { t->zoomOut();  });
-    connect(searchAction,       &QAction::triggered, this,[t] { t->toggleShowSearchBar();  });
-    connect(clearAction,        &QAction::triggered, this,[t] { t->clear();  });
-    connect(fontAction,         &QAction::triggered, this,[t] { t->clear();  });
-    connect(hideAction,         &QAction::triggered, this,[tva] { tva->triggered();  });
-    connect(fontAction,         &QAction::triggered, this,&MainWindow::chooseFont);
-    connect(colorStyleAction,   &QAction::triggered, this,&MainWindow::chooseColorStyle);
-
-    connect(newTermTabAction, &QAction::triggered, this,[this] {
-      ads::CDockWidget* docknew = createNewTerminal();
-       TerminalWidget* tn = qobject_cast<TerminalWidget*>(docknew->widget());
-       if (this->activeTerm != NULL)
-       {
-            tn->changeDir(this->activeTerm->workingDirectory());
-       }
-       m_DockManager->addDockWidgetTab(ads::RightDockWidgetArea, docknew);
-
+    dw->setFeature(ads::CDockWidget::DockWidgetDeleteOnClose, true);
+    connect(dw, &ads::CDockWidget::closed, this, [t]() {
+        delete t;
+        qDebug() << "Dock Closed";
+    });
+    connect(t, &TerminalWidget::finished, this, [dw]() {
+        dw->close();
+        qDebug() << "Terminal Finished Closed";
     });
 
-    connect(newTermAction, &QAction::triggered, this,[this] {
-       ads::CDockWidget* docknew = createNewTerminal();
-       TerminalWidget* tn = qobject_cast<TerminalWidget*>(docknew->widget());
-       if (this->activeTerm != NULL)
-       {
-            tn->changeDir(this->activeTerm->workingDirectory());
-       }
-       m_DockManager->addDockWidget(ads::RightDockWidgetArea, docknew);
-    });
+    dw->setWidget(t);
+    auto toolbar = dw->createDefaultToolBar();
+    toolbar->setStyleSheet("background-color:black; color:lightgrey");
 
-    connect(newTermActionDown, &QAction::triggered, this,[this] {
-       ads::CDockWidget* docknew = createNewTerminal();
-       TerminalWidget* tn = qobject_cast<TerminalWidget*>(docknew->widget());
-       if (this->activeTerm != NULL)
-       {
-            tn->changeDir(this->activeTerm->workingDirectory());
-       }
-       m_DockManager->addDockWidget(ads::BottomDockWidgetArea, docknew);
-    });
+    QAction* toggleViewAction = dw->toggleViewAction();
+    m_toggleMenu->addAction(toggleViewAction);
+
+    QList<QAction*> actions = createTerminalToolBarActions(t, dw);
+    for (QAction* a : actions) {
+        toolbar->addAction(a);
+    }
 
     t->setContextMenuPolicy(Qt::CustomContextMenu);
-    connect(t,&QWidget::customContextMenuRequested, 
-        t,[this,t,lstAction] (const QPoint &p) {
+    connect(t, &QWidget::customContextMenuRequested, t, [actions, t](const QPoint& p) {
         QMenu menu;
-        foreach (QAction *ac, lstAction) {
-            menu.addAction(ac);
+        for (QAction* ac : actions) {
             ac->setText(ac->toolTip());
+            menu.addAction(ac);
         }
         menu.exec(t->mapToGlobal(p));
-        foreach (QAction *ac, lstAction) {
-           ac->setText("");
-        }
-       }
-    );
+        for (QAction* ac : actions) ac->setText("");
+    });
 
-    //ToolBar->addAction(ui.actionRestoreState);
-
-    ToolBar->setStyleSheet("background-color:black; color:lightgrey");
-    return DockWidget;
+    return dw;
 }
+
 
 void MainWindow::getFocusTerm()
 {
@@ -551,6 +471,9 @@ void MainWindow::urlActived(const QUrl &u) {
     auto wv = new QWebView();
     auto wp = new QWebPage();
     wv->setPage(wp);
+    wp->settings()->setAttribute(QWebSettings::DeveloperExtrasEnabled, true);
+    connect(wp,   &QWebPage::consoleMessageReceived, this,&MainWindow::consoleMessageReceived);
+
     auto wf = wp->currentFrame();
     wf->setUrl(u);
 
@@ -594,63 +517,181 @@ void MainWindow::onDirContextMenu(const QPoint &p)
 */
 }
 
-/*********************************************
-  * Command recieve form QSingletonApplication
-***********************************************/
-void MainWindow::commandRecieved(QString cwd,QStringList cmd)
+void MainWindow::consoleMessageReceived(QWebPage::MessageSource source, QWebPage::MessageLevel level, const QString & message, int lineNumber, const QString & sourceID)
 {
- qDebug() << cmd;
- auto p = new parameterManager(cmd);
+  qDebug() << "consoleMessageReceived";
+  qDebug() << message;
+  qDebug() << sourceID;
+} 
 
- if (p->shell)
- {
-     if (p->nameDock.length()> 0)
-       {
-         QMap<QString, ads::CDockWidget*> dMap =   this->m_DockManager->dockWidgetsMap();
-         foreach ( const auto& outerKey, dMap.keys() ) {
-              if (outerKey  == p->nameDock) {
-                     auto dw = createNewTerminal();  
-                     if (p->createintab)
-                     {
-	                m_DockManager->addDockWidgetTab( p->location, dw);
-                     } else {
-	                m_DockManager->addDockWidget(p->location, dw, dMap[outerKey]->dockAreaWidget());
-                     }
-              }
-         }
-     }
-     else
-     {
-           auto dw = createNewTerminal();  
-	   m_DockManager->addDockWidget(p->location, dw);
-     }
-   }
 
-   if ( p->man)
-   {
-      urlActived(QUrl("https://man7.org/linux/man-pages/man1/"+p->nameMan+".1.html"));
-    }
-   if ( p->edit)
-   {
+
+QString MainWindow::renderTemplate(const QStringList& items, const QString& user)
+{
+}
+
+void MainWindow::editfile(parameterManager *p)
+{
        QString strScript="";
-       strScript = readFile("/home/minix/STUFF/QT/KDDockWidgets/examples/minimal/monaco/index.tpl");
-       strScript.replace(QString("@CONTENT@"),QString(readFile(p->nameFileToEdit)));
+       strScript = readFile(joinDir(appdir,"/monaco/index.tpl"));
+
+       // https://stackoverflow.com/questions/5090969/read-a-text-file-to-qstringlist
+       //QFile TextFile(p->nameFileToEdit);
+       QFile TextFile(p->nameFileToEdit.trimmed());
+
+       if (!TextFile.open(QIODevice::ReadWrite))
+        {
+           qDebug() << "Unable to create empty file " << p->nameFileToEdit ;
+           return;
+       }
+
+       //Open file for reading
+       
+       QStringList SL;
+
+       while(!TextFile.atEnd()) {
+            SL.append(QString(TextFile.readLine()).remove("\n").replace("'","\\'"));
+       }
+       QString str =  SL.join("',\n'"); 
+       QVariantMap data;
+       data["items"] = SL;
+       data["language"] = MonacoLanguage::fromExtension(p->nameFileToEdit);
+;
+       strScript = TemplateEngineQt::renderFile(joinDir(appdir,"/monaco/index.tpl"), data);
+      
+       saveFile(joinDir(appdir,"/monaco/index.html"),strScript);
+       /*
        QFile filew;
-       filew.setFileName("/home/minix/STUFF/QT/KDDockWidgets/examples/minimal/monaco/index.html");
-       QTextStream data(&filew);
+       filew.setFileName(joinDir(appdir,"/monaco/index.html"));
+       QTextStream datastream(&filew);
 
        if(filew.open(QIODevice::WriteOnly)){
-              data << strScript;
+              datastream << strScript;
               filew.close();
         } else {
                 qDebug() << " Can write file ";
         }
-      urlActived(QUrl("file:////home/minix/STUFF/QT/KDDockWidgets/examples/minimal/monaco/index.html"));
-  }
-  delete(p);
-
-
+      */
+      
+      urlActived(QUrl("file:///"+joinDir(appdir,"/monaco/index.html")));
 }
+    
+
+
+/*********************************************
+  * Command recieve form QSingletonApplication
+***********************************************/
+
+void MainWindow::handleShellMode(parameterManager& p)
+{
+    if (!p.nameDock.isEmpty()) {
+        auto dMap = this->m_DockManager->dockWidgetsMap();
+        for (const auto& key : dMap.keys()) {
+            if (key == p.nameDock) {
+                auto dw = createNewTerminal();
+                if (p.createintab) {
+                    m_DockManager->addDockWidgetTab(static_cast<ads::DockWidgetArea>(p.location), dw);
+                } else {
+                    m_DockManager->addDockWidget(static_cast<ads::DockWidgetArea>(p.location), dw, dMap[key]->dockAreaWidget());
+                }
+                return;
+            }
+        }
+    }
+
+    // Default: create normally
+    auto dw = createNewTerminal();
+    m_DockManager->addDockWidget(static_cast<ads::DockWidgetArea>(p.location), dw);
+}
+
+
+
+void MainWindow::commandRecieved(QString cwd, QStringList cmd)
+{
+    qDebug() << cmd;
+
+    std::unique_ptr<parameterManager> p = std::make_unique<parameterManager>(cmd);
+    QFileInfo fi(p->nameFileToEdit);
+
+    switch (p->mode)
+    {
+    case parameterManager::Mode::Shell:
+        handleShellMode(*p);
+        break;
+
+    case parameterManager::Mode::Man:
+        urlActived(QUrl("https://man7.org/linux/man-pages/man1/" + p->nameParam + ".1.html"));
+        break;
+
+    case parameterManager::Mode::View:
+        if ( fi.isDir()) {
+            QDir dir(p->nameFileToEdit);
+            QStringList filter;
+            QVariantMap data;
+            filter <<"*.jpg" << "*.png" << "*.jpeg";
+            QFileInfoList files = dir.entryInfoList(filter);
+            QStringList listFiles ;
+            for ( auto f : files)
+                 listFiles.append(QUrl::fromLocalFile(f.absoluteFilePath()).toString().replace("é","&eacute;"));
+            data["files"] = listFiles;
+            QString strScript = TemplateEngineQt::renderFile(joinDir(appdir,"/monaco/explorer.tpl"), data);
+            saveFile(joinDir(appdir,"/monaco/explorer.html"),strScript);
+            urlActived(QUrl::fromLocalFile(joinDir(appdir,"/monaco/explorer.html")));
+            return;
+        }
+
+        if (MonacoLanguage::isMarkdown(p->nameFileToEdit) ) 
+        {
+          QVariantMap data;
+          data["content"] = readFile(fi.absoluteFilePath());
+          QString strScript = TemplateEngineQt::renderFile(joinDir(appdir,"/monaco/markdown.tpl"), data);
+          saveFile(joinDir(appdir,"/monaco/markdown.html"),strScript);
+          urlActived(QUrl::fromLocalFile(joinDir(appdir,"/monaco/markdown.html")));
+        
+        } else {
+           if (MonacoLanguage::isVideo(p->nameFileToEdit) ) 
+          {
+          QVariantMap data;
+          data["file"] = QUrl::fromLocalFile(fi.absoluteFilePath());
+          QString strScript = TemplateEngineQt::renderFile(joinDir(appdir,"/monaco/video.tpl"), data);
+          saveFile(joinDir(appdir,"/monaco/video.html"),strScript);
+          urlActived(QUrl::fromLocalFile(joinDir(appdir,"/monaco/video.html")));
+           } 
+            else 
+           {
+              urlActived(QUrl::fromLocalFile(fi.absoluteFilePath()));
+           }
+        }
+        break;
+
+    case parameterManager::Mode::Edit:
+        editfile(p.get());
+        break;
+
+    default:
+        break;
+    }
+}
+
+QString MainWindow::joinDir(QString dir,QString subdir)
+{
+   return QDir::cleanPath(dir + subdir);
+} 
+   
+void MainWindow::saveFile(QString filename,QString& content)
+{
+       QFile filew;
+       filew.setFileName(filename);
+       QTextStream datastream(&filew);
+
+       if(filew.open(QIODevice::WriteOnly)){
+              datastream << content;
+              filew.close();
+        } else {
+                qDebug() << " Can write file ";
+        }
+}
+ 
 
 QString MainWindow::readFile(QString filename)
 {
@@ -662,7 +703,119 @@ QString MainWindow::readFile(QString filename)
        if(file.open(QIODevice::ReadOnly)){
              result= file.readAll();
              file.close();
+       } else {
+                qDebug() << " can't read file  " << filename;
        }
        return result;
+}
+
+QList<QAction*> MainWindow::createTerminalToolBarActions(TerminalWidget* t, ads::CDockWidget* dw)
+{
+    QList<QAction*> actions;
+
+    QAction* zoomInAction     = createAction("fa_solid expand", "Font size increase");
+    QAction* zoomOutAction    = createAction("fa_solid compress", "Font size decrease");
+    QAction* fontAction       = createAction("fa_solid font", "Choose Font");
+    QAction* searchAction     = createAction("fa_solid search", "Search in console");
+    QAction* clearAction      = createAction("fa_solid bath", "Clear");
+    QAction* newTermAction    = createAction("fa_solid clone", "New Term in tab");
+    QAction* newTermDown      = createAction("fa_solid columns", "New Term Down", 90);
+    QAction* newTermTab       = createAction("fa_solid plus", "New Tab on the right");
+    QAction* insertFolder     = createAction("fa_solid folder", "Choose a folder and paste");
+    QAction* insertFile       = createAction("fa_solid file", "Choose files and paste");
+    QAction* hideAction       = createAction("fa_solid eyeslash", "Hide Console");
+    QAction* colorStyle       = createAction("fa_solid blacktie", "Choose Color Style");
+
+    // connections
+    connect(zoomInAction, &QAction::triggered, t, &TerminalWidget::zoomIn);
+    connect(zoomOutAction, &QAction::triggered, t, &TerminalWidget::zoomOut);
+    connect(searchAction, &QAction::triggered, t, &TerminalWidget::toggleShowSearchBar);
+    connect(clearAction, &QAction::triggered, t, &TerminalWidget::clear);
+    connect(fontAction, &QAction::triggered, this, &MainWindow::chooseFont);
+    connect(colorStyle, &QAction::triggered, this, &MainWindow::chooseColorStyle);
+    connect(hideAction, &QAction::triggered, this, [dw]() {
+        dw->toggleViewAction()->trigger();
+    });
+
+    connect(insertFile, &QAction::triggered, this, &MainWindow::chooseFilesAndPaste);
+    connect(insertFolder, &QAction::triggered, this, &MainWindow::chooseDirectoryAndPaste);
+
+    connect(newTermTab, &QAction::triggered, this, [this]() {
+        auto docknew = createNewTerminal();
+        auto tn = qobject_cast<TerminalWidget*>(docknew->widget());
+        if (activeTerm) tn->changeDir(activeTerm->workingDirectory());
+        m_DockManager->addDockWidgetTab(ads::RightDockWidgetArea, docknew);
+    });
+
+    connect(newTermAction, &QAction::triggered, this, [this]() {
+        auto docknew = createNewTerminal();
+        auto tn = qobject_cast<TerminalWidget*>(docknew->widget());
+        if (activeTerm) tn->changeDir(activeTerm->workingDirectory());
+        m_DockManager->addDockWidget(ads::RightDockWidgetArea, docknew);
+    });
+
+    connect(newTermDown, &QAction::triggered, this, [this]() {
+        auto docknew = createNewTerminal();
+        auto tn = qobject_cast<TerminalWidget*>(docknew->widget());
+        if (activeTerm) tn->changeDir(activeTerm->workingDirectory());
+        m_DockManager->addDockWidget(ads::BottomDockWidgetArea, docknew);
+    });
+
+    // Regroup all
+    actions << zoomInAction << zoomOutAction << fontAction << colorStyle << clearAction
+            << searchAction << insertFile << insertFolder << newTermAction << newTermDown << newTermTab << hideAction;
+
+    return actions;
+}
+
+QTreeView* MainWindow::createConfiguredTreeView()
+{
+    auto view = new QTreeView();
+    view->setFrameShape(QFrame::NoFrame);
+    view->setSelectionMode(QAbstractItemView::ExtendedSelection);
+    view->setDragEnabled(true);
+    view->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(view, SIGNAL(customContextMenuRequested(const QPoint &)), this, SLOT(onDirContextMenu(const QPoint &)));
+    return view;
+}
+
+QFileSystemModel* MainWindow::createAndSetFileSystemModel(QTreeView* view)
+{
+    auto model = new QFileSystemModel(view);
+    model->setRootPath(QDir::currentPath());
+    view->setModel(model);
+    for (int i = 1; i < model->columnCount(); ++i)
+        view->hideColumn(i);
+    view->expandAll();
+    return model;
+}
+
+void MainWindow::configureFileSystemToolbar(ads::CDockWidget* dock, QTreeView* view)
+{
+    auto toolbar = dock->createDefaultToolBar();
+    QAction* toggleAction = dock->toggleViewAction();
+    m_toggleMenu->addAction(toggleAction);
+
+    auto hideAction = createAction("fa_solid eyeslash", "Hide");
+    auto colorToggle = createAction("fa_solid blacktie", "Change Dark/White");
+    colorToggle->setCheckable(true);
+
+    toolbar->addAction(hideAction);
+    toolbar->addAction(colorToggle);
+
+    connect(hideAction, &QAction::triggered, this, [toggleAction]() {
+        toggleAction->trigger();
+    });
+
+
+    connect(colorToggle, &QAction::triggered, this, [view, colorToggle]() {
+      if (colorToggle->isChecked()) {
+        view->setStyleSheet("background: #050505; color: white");
+      } else {
+        view->setStyleSheet("background: white; color: black");
+      }
+    });
+
+    toolbar->setStyleSheet("background-color:black; color:lightgrey");
 }
 

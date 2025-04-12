@@ -1,6 +1,8 @@
 #include "MainWindow.h"
 #include "parametermanager.h"
 #include "QSingleInstance/qsingleinstance.h"
+#include "threadhttpd.h"
+#include "bookmarks.h"
 
 #include <QDir>
 #include <QApplication>
@@ -20,6 +22,13 @@ int main(int argc, char *argv[])
         p.showHelp();
         exit(0);
     }
+    if ( p.isBookmarkRequest() ) 
+    {
+        BookmarkManager b ; 
+        b.loadFromFile(BookmarkManager::pathBookmark());
+        b.addBookmark (p.nameParam);
+        b.saveToFile(BookmarkManager::pathBookmark());
+    }
 
     QSingleInstance instance;
 
@@ -28,8 +37,10 @@ int main(int argc, char *argv[])
     MainWindow *w= nullptr;
 
     instance.setStartupFunction([&]() -> int {
-                w = new MainWindow();
+                w = new MainWindow( a.applicationDirPath() );
+                ThreadHttpd *t = new ThreadHttpd(w);
                 instance.setNotifyWindow(w);
+                t->start();
                 w->show();
                 return 0;
     });

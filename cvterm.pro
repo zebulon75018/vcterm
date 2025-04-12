@@ -11,10 +11,16 @@ QT += core gui widgets webkitwidgets network
 include(QtAwesome/QtAwesome/QtAwesome.pri )
 include(QSingleInstance/de_skycoder42_qsingleinstance.pri)
 
+#include(QtWebApp/QtWebApp/logging/logging.pri)
+#include(QtWebApp/QtWebApp/httpserver/httpserver.pri)
+include(templateengine/templateengine.pri)
+
+
 TARGET = vcterm
 #DESTDIR = $${ADS_OUT_ROOT}/lib
 TEMPLATE = app
-CONFIG += c++14
+#CONFIG += c++14
+CONFIG += c++17
 CONFIG += debug_and_release
 adsBuildStatic {
     DEFINES += ADS_STATIC
@@ -25,11 +31,19 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
         main.cpp \
         MainWindow.cpp \
-        parametermanager.cpp
+        parametermanager.cpp \
+        templateEngineQt.cpp \
+        typeFile.cpp \
+        bookmarks.cpp \
+        threadhttpd.cpp 
 
 HEADERS += \
         MainWindow.h \
-        parametermanager.h
+        parametermanager.h \
+        templateEngineQt.h \
+        typeFile.h \
+        bookmarks.h \
+        threadhttpd.h 
 
 #FORMS += \
 #        MainWindow.ui
@@ -56,6 +70,6 @@ else{
 
 LIBS += -lQtAwesome
 
-INCLUDEPATH += Qt-Advanced-Docking-System/src QSingleInstance
+INCLUDEPATH += Qt-Advanced-Docking-System/src QSingleInstance thirdparty/ QtWebApp/QtWebApp/
 DEPENDPATH += Qt-Advanced-Docking-System/src    
 

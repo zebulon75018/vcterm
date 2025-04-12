@@ -7,18 +7,26 @@
 class parameterManager
 {
 public:
+  enum class Mode {
+        None,
+        Shell,
+        Man,
+        Edit,
+        View,
+        Bookmark,
+        Help
+    };
+
     parameterManager(QStringList param);
     bool isHelpRequest(); 
+    bool isBookmarkRequest(); 
     void showHelp(); 
 
    /***************************/  
-    bool helpRequest = false;
-    bool man = false;
+    Mode mode = Mode::None;
     bool createintab = false;
-    QString nameMan;
-    bool edit = false;
+    QString nameParam; // Name of param for man and bookmark
     QString nameFileToEdit;
-    bool shell = true;
     QString nameDock;
     ads::DockWidgetArea location;
 };

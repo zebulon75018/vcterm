@@ -3,12 +3,17 @@
 
 #include <QMainWindow>
 #include <QLineEdit>
+#include <QThread>
+#include <QWebPage>
+
+
 
 #include "DockManager.h"
 #include "qtterminalwidget/terminalwidget.h"
 #include "QtAwesome/QtAwesome/QtAwesome.h"
 
 
+class parameterManager;
 class QMenu;
 class QFileSystemModel;
 class QTreeView;
@@ -21,7 +26,7 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    explicit MainWindow(QWidget *parent = 0);
+    explicit MainWindow(QString adir,QWidget *parent = 0);
     ~MainWindow();
 
 public slots:
@@ -39,6 +44,7 @@ public slots:
     void chooseDirectoryAndPaste();
     void selectionChangeClipboard();
     void onDirContextMenu(const QPoint &p);
+    void consoleMessageReceived(QWebPage::MessageSource source,QWebPage::MessageLevel level, const QString & message, int lineNumber, const QString & sourceID);
 
 
 
@@ -46,11 +52,24 @@ private:
    void createMenu();
    QAction *createAction(QString ico, QString tooltip="",int rotation = 0 );
    QString readFile(QString filename);
+   void saveFile(QString filename,QString& content);
    ads::CDockWidget* createNewTerminal();
    ads::CDockWidget* createFileSystemTreeDockWidget();
    TerminalWidget* createTerminalWidget();
+   void editfile(parameterManager *);
 
    void sendAllPrivate(QLineEdit::EchoMode mode,QString label);
+   QString joinDir(QString dir,QString subdir);
+   void handleShellMode(parameterManager& p);
+   QList<QAction*> createTerminalToolBarActions(TerminalWidget* t, ads::CDockWidget* dw);
+   QTreeView* createConfiguredTreeView();
+   QFileSystemModel* createAndSetFileSystemModel(QTreeView* view);
+   void configureFileSystemToolbar(ads::CDockWidget* dock, QTreeView* view);
+   QString renderTemplate(const QStringList& items, const QString& user);
+
+
+
+
 
 
 
@@ -64,6 +83,7 @@ private:
     fa::QtAwesome *awesome;
     QClipboard *clipboard;
     QStatusBar *statusbar;
+    QString appdir;
 
 };
 
